@@ -6,7 +6,7 @@ import subprocess
 import sys
 import os
 
-from network import get_network_latency, get_node_ip
+from network import get_network_latency, get_node_ip, get_overlay_interface
 from pipeline import calculate_pipeline
 
 def send_msg(sock, msg_dict):
@@ -88,8 +88,11 @@ def run_sglang_subprocess(role, args, assigned_rank, nnodes, pp_size, dist_init_
     print(f"[{role}] Starting sglang server: {' '.join(cmd)}")
 
     env = os.environ.copy()
-    env["NCCL_SOCKET_IFNAME"] = "tailscale0"
-    env["GLOO_SOCKET_IFNAME"] = "tailscale0"
+
+    overlay_network = args.overlay_network if hasattr(args, "overlay_network") else args.get("overlay_network")
+    ifName = get_overlay_interface(overlay_network)
+    env["NCCL_SOCKET_IFNAME"] = ifName
+    env["GLOO_SOCKET_IFNAME"] = ifName
 
     venv_bin = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'sglang', 'venv', 'bin')
     if os.path.exists(venv_bin):
@@ -111,8 +114,11 @@ def run_vllm_subprocess(role, args, pipeline_order, node_ip, master_ip):
         master_ip (str): IP address of the Ray head node.
     """
     env = os.environ.copy()
-    env["NCCL_SOCKET_IFNAME"] = args.get("overlay_network", "tailscale") + "0"
-    env["GLOO_SOCKET_IFNAME"] = args.get("overlay_network", "tailscale") + "0"
+
+    overlay_network = args.overlay_network if hasattr(args, "overlay_network") else args.get("overlay_network")
+    ifName = get_overlay_interface(overlay_network)
+    env["NCCL_SOCKET_IFNAME"] = ifName
+    env["GLOO_SOCKET_IFNAME"] = ifName
     env["VLLM_HOST_IP"] = node_ip
 
     venv_bin = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'vllm', 'venv', 'bin')
@@ -243,6 +249,7 @@ def master_mode(args):
             "dist_init_addr": dist_init_addr,
             "model_path": args.model_path,
             "inference_engine": args.inference_engine,
+            "overlay_network": args.overlay_network,
             "pipeline_order": pipeline_order,
             "master_ip": ts_ip
         }
@@ -347,4 +354,3 @@ if __name__ == "__main__":
         master_mode(args)
     elif args.role == "worker":
         worker_mode(args)
-

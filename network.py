@@ -1,5 +1,7 @@
 import subprocess
 import re
+import socket
+import concurrent.futures
 
 def get_network_latency(overlay_network: str) -> dict:
     """
@@ -39,6 +41,50 @@ def get_node_ip(overlay_network: str) -> str:
             pass
     return "127.0.0.1"
 
+def get_overlay_interface(overlay_name):
+    """
+    Dynamically resolves the network interface name based on the overlay network choice.
+    Uses socket.if_nameindex() to find active interfaces safely.
+    """
+    overlay_name = overlay_name.lower()
+
+    prefixes = {
+        "tailscale": "tailscale",
+        "netbird": "wt",
+        "zerotier": "zt",
+        "wireguard": "wg"
+    }
+    prefix = prefixes.get(overlay_name, overlay_name)
+
+    if hasattr(socket, 'if_nameindex'):
+        try:
+            for _, name in socket.if_nameindex():
+                if name.startswith(prefix):
+                    return name
+        except OSError:
+            pass
+
+    fallbacks = {
+        "tailscale": "tailscale0",
+        "netbird": "wt0",
+        "zerotier": "zt0",
+        "wireguard": "wg0"
+    }
+    return fallbacks.get(overlay_name, f"{overlay_name}0")
+
+def ping_ip(ip):
+        try:
+            ping_res = subprocess.run(['ping', '-c', '1', '-W', '1', ip], capture_output=True, text=True)
+            if ping_res.returncode == 0:
+                match = re.search(r'time=([\d\.]+)\s*ms', ping_res.stdout)
+                if not match:
+                    match = re.search(r'min/avg/max/mdev = [\d\.]+/([\d\.]+)/[\d\.]+/[\d\.]+', ping_res.stdout)
+                if match:
+                    return ip, float(match.group(1))
+        except Exception:
+            pass
+        return ip, None
+
 def _get_netbird_latency() -> dict:
     """
     Internal helper to profile latencies for NetBird peers.
@@ -69,21 +115,6 @@ def _get_netbird_latency() -> dict:
         ips.append(current_ip)
 
     ips = list(set(ips))
-
-    import concurrent.futures
-
-    def ping_ip(ip):
-        try:
-            ping_res = subprocess.run(['ping', '-c', '1', '-W', '1', ip], capture_output=True, text=True)
-            if ping_res.returncode == 0:
-                match = re.search(r'time=([\d\.]+)\s*ms', ping_res.stdout)
-                if not match:
-                    match = re.search(r'min/avg/max/mdev = [\d\.]+/([\d\.]+)/[\d\.]+/[\d\.]+', ping_res.stdout)
-                if match:
-                    return ip, float(match.group(1))
-        except Exception:
-            pass
-        return ip, None
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = {executor.submit(ping_ip, ip): ip for ip in ips}
@@ -117,21 +148,6 @@ def _get_tailscale_latency() -> dict:
             ips.append(match.group(0))
 
     ips = list(set(ips))
-
-    import concurrent.futures
-
-    def ping_ip(ip):
-        try:
-            ping_res = subprocess.run(['ping', '-c', '1', '-W', '1', ip], capture_output=True, text=True)
-            if ping_res.returncode == 0:
-                match = re.search(r'time=([\d\.]+)\s*ms', ping_res.stdout)
-                if not match:
-                    match = re.search(r'min/avg/max/mdev = [\d\.]+/([\d\.]+)/[\d\.]+/[\d\.]+', ping_res.stdout)
-                if match:
-                    return ip, float(match.group(1))
-        except Exception:
-            pass
-        return ip, None
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = {executor.submit(ping_ip, ip): ip for ip in ips}
