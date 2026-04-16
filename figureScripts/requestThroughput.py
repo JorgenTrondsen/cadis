@@ -21,8 +21,8 @@ parallax_throughput = {
     }
 }
 
-# CADIS Data (Request throughput (req/s))
-cadis_throughput = {
+# ADDIS Data (Request throughput (req/s))
+addis_throughput = {
     "ShareGPT": {
         4: np.mean([0.23, 0.23]),
         8: np.mean([0.45, 0.45]),
@@ -45,13 +45,13 @@ for i, rate in enumerate(req_rates):
         ax = axes[i, j]
 
         p_val = parallax_throughput[dataset][rate]
-        c_val = cadis_throughput[dataset][rate]
+        c_val = addis_throughput[dataset][rate]
 
-        # Calculate percentage difference (Improvement of CADIS over Parallax)
+        # Calculate percentage difference (Improvement of ADDIS over Parallax)
         percent_diff = ((c_val - p_val) / c_val) * 100
 
         rects1 = ax.bar(x - 0.2, [p_val], width, label='Parallax', color='skyblue', edgecolor='black', linewidth=1.2, alpha=0.8)
-        rects2 = ax.bar(x + 0.2, [c_val], width, label='CADIS', color='orange', edgecolor='black', linewidth=1.2, alpha=0.8)
+        rects2 = ax.bar(x + 0.2, [c_val], width, label='ADDIS', color='orange', edgecolor='black', linewidth=1.2, alpha=0.8)
 
         ax.text(x[0] - 0.2, p_val, f"↓{percent_diff:.1f}%", ha='center', va='bottom', color='black', fontsize=26)
         ax.set_title(f"{dataset} (req rate={rate})", fontsize=26)
@@ -62,7 +62,7 @@ for i, rate in enumerate(req_rates):
         ax.grid(axis='y', linestyle='--', alpha=0.7)
 
 # Add a single legend
-fig.legend([rects1, rects2], ["Parallax", "CADIS"], loc='upper center', ncol=2, fontsize=26)
+fig.legend([rects1, rects2], ["Parallax", "ADDIS"], loc='upper center', ncol=2, fontsize=26)
 
 plt.tight_layout(rect=[0.01, 0.01, 1, 0.92], h_pad=4.0)
 plt.savefig("request_throughput.png", bbox_inches='tight')

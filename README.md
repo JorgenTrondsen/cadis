@@ -1,4 +1,4 @@
-# Cadis
+# ADDIS
 
 ## Prerequisites
 
@@ -11,13 +11,13 @@ Before installing, ensure your systems meets the following requirements:
 
 ## Setup
 
-Currently, Cadis relies on specific changes to the underlying inference engine. You will need to clone this repository alongside a forked repository of your desired inference engine.
+Currently, ADDIS relies on specific changes to the underlying inference engine. You will need to clone this repository alongside a forked repository of your desired inference engine.
 
-*(Note: We currently have pending pull requests for `sglang` and `vLLM`. If they are not accepted, we will introduce these changes as monkey patches directly within Cadis in the future.)*
+*(Note: We currently have pending pull requests for `sglang` and `vLLM`. If they are not accepted, we will introduce these changes as monkey patches directly within ADDIS in the future.)*
 
 ### 1. Clone Repositories
 
-Depending on your engine of choice, clone the relevant fork so it sits in the same parent directory as `cadis`:
+Depending on your engine of choice, clone the relevant fork so it sits in the same parent directory as `ADDIS`:
 
 **For vLLM:**
 ```bash
@@ -32,7 +32,7 @@ git clone -b pp_optimization https://github.com/JorgenTrondsen/sglang.git
 Your folder structure must look like this:
 ```text
 person@machine:~$ ls
-cadis  sglang  vllm
+addis  sglang  vllm
 ```
 
 ### 2. Install Build Tools
@@ -65,7 +65,7 @@ VLLM_USE_PRECOMPILED=1 uv pip install --prerelease=allow --editable .
 
 ## Usage
 
-### 1. Launching Cadis (Master)
+### 1. Launching ADDIS (Master)
 
 To start the master node, which coordinates network profiling and pipeline calculation:
 
@@ -87,7 +87,7 @@ python src/launcher.py master \
 - `--kv-cache-size`: KV cache memory size (default: 8G).
 - `--overlay-network`: Overlay network type (`tailscale` or `netbird`).
 
-### 2. Launching Cadis (Worker)
+### 2. Launching ADDIS (Worker)
 
 On each worker node, join the cluster by pointing to the master's IP:
 

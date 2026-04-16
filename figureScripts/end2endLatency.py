@@ -23,8 +23,8 @@ parallax_data = {
     }
 }
 
-# CADIS Data
-cadis_data = {
+# ADDIS Data
+addis_data = {
     "ShareGPT": {
         4: [17.687, 17.691, 17.691, 17.691, 17.691, 17.691, 17.691],
         8: [17.892, 17.895, 17.895, 17.895, 17.895, 17.895, 17.895],
@@ -46,9 +46,9 @@ for i, rate in enumerate(req_rates):
         ax = axes[i, j]
 
         p_vals = parallax_data[dataset][rate]
-        c_vals = cadis_data[dataset][rate]
+        c_vals = addis_data[dataset][rate]
         line1, = ax.plot(x, p_vals, marker='o', label='Parallax', color='skyblue', linestyle='-', markeredgecolor='black', linewidth=3.5)
-        line2, = ax.plot(x, c_vals, marker='s', label='CADIS', color='orange', linestyle='-', markeredgecolor='black', linewidth=3.5)
+        line2, = ax.plot(x, c_vals, marker='s', label='addis', color='orange', linestyle='-', markeredgecolor='black', linewidth=3.5)
 
         ax.set_title(f"{dataset} (req rate={rate})", fontsize=26)
         ax.set_xticks(x)
@@ -61,7 +61,7 @@ for i, rate in enumerate(req_rates):
         ax.grid(True, linestyle='--', alpha=0.6)
 
 # Add a single legend for the entire figure in the layout, often near the title
-fig.legend([line1, line2], ["Parallax", "CADIS"], loc='upper center', ncol=2, fontsize=26)
+fig.legend([line1, line2], ["Parallax", "addis"], loc='upper center', ncol=2, fontsize=26)
 
 # Use h_pad to increase vertical spacing and rect[0] to add room for the y-label
 plt.tight_layout(rect=[0.05, 0.01, 1, 0.92], h_pad=4.0)

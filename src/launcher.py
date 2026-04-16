@@ -336,7 +336,7 @@ def worker_mode(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="CADIS Sglang Launcher")
+    parser = argparse.ArgumentParser(description="ADDIS Sglang Launcher")
     subparsers = parser.add_subparsers(dest="role", required=True)
 
     # Master

@@ -18,7 +18,7 @@ Output token throughput (tok/s): 4.22
 Output token throughput (tok/s): 2.29
 
 
-## CADIS
+## ADDIS
 
 ### 0 ms
 Output token throughput (tok/s): 28.82
