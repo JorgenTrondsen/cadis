@@ -81,6 +81,7 @@ def run_sglang_subprocess(role, args, assigned_rank, nnodes, pp_size, dist_init_
         "--pp-size", str(pp_size),
         "--mem-fraction-static", str(args.gpu_memory_utilization) if hasattr(args, "gpu_memory_utilization") else str(args.get("gpu_memory_utilization")),
         "--pp-async-batch-depth", str(args.pp_async_batch_depth) if hasattr(args, "pp_async_batch_depth") else str(args.get("pp_async_batch_depth")),
+        "--max-running-requests", "32"
     ]
 
     if role == 'master':
