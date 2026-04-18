@@ -86,17 +86,16 @@ def get_overlay_interface(overlay_name):
     return fallbacks.get(overlay_name, f"{overlay_name}0")
 
 def ping_ip(ip):
-        try:
-            ping_res = subprocess.run(['ping', '-c', '1', '-W', '1', ip], capture_output=True, text=True)
-            if ping_res.returncode == 0:
-                match = re.search(r'time=([\d\.]+)\s*ms', ping_res.stdout)
-                if not match:
-                    match = re.search(r'min/avg/max/mdev = [\d\.]+/([\d\.]+)/[\d\.]+/[\d\.]+', ping_res.stdout)
-                if match:
-                    return ip, float(match.group(1))
-        except Exception:
-            pass
-        return ip, None
+    try:
+        res = subprocess.run(['ping', '-c', '5', '-i', '0.2', '-W', '1', ip], capture_output=True, text=True)
+        if res.returncode == 0:
+            # We look for the 'min' value in 'min/avg/max/mdev' to bypass initial DERP relay spikes
+            match = re.search(r'min/avg/max/mdev = ([\d\.]+)', res.stdout)
+            if match:
+                return ip, float(match.group(1))
+    except Exception:
+        pass
+    return ip, None
 
 def _get_zerotier_latency() -> dict:
     """
