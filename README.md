@@ -70,7 +70,7 @@ VLLM_USE_PRECOMPILED=1 uv pip install --prerelease=allow --editable .
 cd addis
 uv venv venv
 source venv/bin/activate
-uv pip install huggingface-hub transformers
+uv pip install transformers
 ```
 
 ### 1. Launching ADDIS (Master)
