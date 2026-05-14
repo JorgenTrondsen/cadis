@@ -1,13 +1,13 @@
 import subprocess
 from transformers import AutoConfig
 
-def calculate_pipeline(workers_latency_data: list, master_latency_data: dict, master_ip: str) -> list:
+def calculate_pipeline(workers_data: list, master_latency_data: dict, master_ip: str) -> list:
     """
     Determines the optimal pipeline sequence by using a greedy nearest neighbor approach.
     Starting from the master node (Rank 0), it iteratively adds the node with the lowest
     latency from the previous node's perspective, ensuring each node is added only once.
     Args:
-        workers_latency_data (list): Latency maps and IPs from each worker.
+        workers_data (list): Latency map and vram usage
         master_latency_data (dict): Latency map from the master node.
         master_ip (str): The IP address of the master node.
     Returns:
@@ -16,7 +16,7 @@ def calculate_pipeline(workers_latency_data: list, master_latency_data: dict, ma
     graph = {}
     graph[master_ip] = master_latency_data
 
-    for data in workers_latency_data:
+    for data in workers_data:
         ip = data["ip"]
         graph[ip] = data["latency"]
 
@@ -27,22 +27,24 @@ def calculate_pipeline(workers_latency_data: list, master_latency_data: dict, ma
 
     best_path = [master_ip]
     remaining_nodes = [node for node in all_nodes if node != master_ip]
+    vram_map = {data["ip"]: data["vram"] for data in workers_data}
 
     while remaining_nodes:
         last_node = best_path[-1]
-        best_next_node = None
-        min_lat = float('inf')
+        candidates = []
 
         for node in remaining_nodes:
             if last_node in graph and node in graph[last_node]:
                 lat = graph[last_node][node]
-                if lat < min_lat:
-                    min_lat = lat
-                    best_next_node = node
+                candidates.append((node, lat))
 
-        if best_next_node is None:
+        if not candidates:
             best_next_node = remaining_nodes[0]
             print(f"No direct latency found from {last_node}, picking next available: {best_next_node}")
+        else:
+            min_lat = min(c[1] for c in candidates) # Find minimum latency among candidates
+            potential_nodes = [c for c in candidates if c[1] <= min_lat + 5] # Filter candidates within 5ms of the minimum latency
+            best_next_node = min(potential_nodes, key=lambda c: vram_map.get(c[0], float('inf')))[0] # From candidate with the lowest VRAM
 
         best_path.append(best_next_node)
         remaining_nodes.remove(best_next_node)
