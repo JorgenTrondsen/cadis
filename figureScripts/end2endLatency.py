@@ -1,68 +1,107 @@
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
 
-# Data Extraction from throughput&e2eLatency.md
-# Units are converted from milliseconds to seconds (/1000)
-# We show: Mean, P95, P96, P97, P98, P99, P100 (Excluding Median)
+# Units converted to seconds (/1000)
+# Format: [Mean, P95, P96, P97, P98, P99, P100]
 
+models = ["Qwen3-8B", "Qwen3-14B"]
 datasets = ["ShareGPT", "WildGPT"]
 req_rates = [4, 8, 32]
 metrics = ["Mean", "P95", "P96", "P97", "P98", "P99", "P100"]
 
-# Parallax Data
 parallax_data = {
-    "ShareGPT": {
-        4: [30.717, 30.796, 30.796, 30.796, 30.797, 30.798, 30.800], # Mean, P95-P100 (Averaged)
-        8: [29.603, 32.674, 33.073, 33.472, 33.871, 34.271, 34.670],
-        32: [33.143, 33.182, 33.182, 33.384, 34.266, 35.148, 36.035]
+    "Qwen3-8B": {
+        "ShareGPT": {
+            4: [24.591, 24.612, 24.612, 24.612, 24.612, 24.612, 24.612],
+            8: [28.373, 28.386, 28.386, 28.386, 28.386, 28.386, 28.386],
+            32: [52.997, 53.004, 53.004, 53.004, 53.004, 53.004, 53.004]
+        },
+        "WildGPT": {
+            4: [23.437, 24.673, 24.673, 24.673, 24.673, 24.673, 24.673],
+            8: [25.160, 26.992, 26.992, 26.992, 26.993, 26.993, 26.993],
+            32: [47.556, 47.828, 47.828, 47.828, 47.828, 47.828, 47.828]
+        }
     },
-    "WildGPT": {
-        4: [26.013, 29.440, 29.442, 29.443, 29.445, 29.446, 29.448],
-        8: [30.823, 36.429, 36.925, 37.420, 37.915, 38.411, 38.906],
-        32: [37.710, 38.147, 38.149, 38.528, 40.226, 41.924, 43.622]
+    "Qwen3-14B": {
+        "ShareGPT": {
+            4: [33.134, 33.165, 33.165, 33.165, 33.165, 33.165, 33.165],
+            8: [38.423, 38.441, 38.441, 38.441, 38.441, 38.441, 38.441],
+            32: [70.544, 70.597, 70.597, 70.597, 70.598, 70.598, 70.598]
+        },
+        "WildGPT": {
+            4: [29.068, 32.706, 32.706, 32.706, 32.707, 32.707, 32.707],
+            8: [34.254, 36.196, 36.197, 36.197, 36.197, 36.197, 36.197],
+            32: [62.372, 63.082, 63.082, 63.082, 63.082, 63.083, 63.083]
+        }
     }
 }
 
-# ADDIS Data
 addis_data = {
-    "ShareGPT": {
-        4: [17.687, 17.691, 17.691, 17.691, 17.691, 17.691, 17.691],
-        8: [17.892, 17.895, 17.895, 17.895, 17.895, 17.895, 17.895],
-        32: [18.947, 19.203, 19.203, 19.203, 19.204, 19.205, 19.206]
+    "Qwen3-8B": {
+        "ShareGPT": {
+            4: [19.889, 19.892, 19.892, 19.893, 19.893, 19.893, 19.893],
+            8: [21.377, 21.389, 21.389, 21.390, 21.390, 21.390, 21.390],
+            32: [22.516, 22.529, 22.530, 22.530, 22.530, 22.530, 22.531]
+        },
+        "WildGPT": {
+            4: [18.452, 20.365, 20.365, 20.365, 20.365, 20.365, 20.365],
+            8: [20.749, 21.780, 21.780, 21.780, 21.780, 21.780, 21.780],
+            32: [22.699, 22.970, 22.970, 22.971, 22.971, 22.972, 22.972]
+        }
     },
-    "WildGPT": {
-        4: [16.699, 18.194, 18.194, 18.194, 18.194, 18.194, 18.194],
-        8: [17.384, 18.264, 18.264, 18.264, 18.264, 18.265, 18.265],
-        32: [22.590, 22.925, 22.925, 22.925, 22.925, 22.925, 22.925]
+    "Qwen3-14B": {
+        "ShareGPT": {
+            4: [28.613, 28.617, 28.617, 28.617, 28.617, 28.617, 28.617],
+            8: [30.986, 31.004, 31.004, 31.004, 31.004, 31.004, 31.004],
+            32: [33.286, 33.313, 33.313, 33.313, 33.314, 33.314, 33.314]
+        },
+        "WildGPT": {
+            4: [25.018, 28.879, 28.879, 28.879, 28.879, 28.879, 28.879],
+            8: [29.839, 31.777, 31.777, 31.777, 31.777, 31.777, 31.777],
+            32: [33.394, 33.961, 33.961, 33.961, 33.962, 33.962, 33.962]
+        }
     }
 }
-
-fig, axes = plt.subplots(len(req_rates), len(datasets), figsize=(12, 15), sharey=True)
 
 x = np.arange(len(metrics))
 
-for i, rate in enumerate(req_rates):
-    for j, dataset in enumerate(datasets):
-        ax = axes[i, j]
+for model in models:
+    fig, axes = plt.subplots(len(req_rates), len(datasets), figsize=(14, 18), sharey=True)
+    fig.suptitle(f"{model}", fontsize=32)
 
-        p_vals = parallax_data[dataset][rate]
-        c_vals = addis_data[dataset][rate]
-        line1, = ax.plot(x, p_vals, marker='o', label='Parallax', color='skyblue', linestyle='-', markeredgecolor='black', linewidth=3.5)
-        line2, = ax.plot(x, c_vals, marker='s', label='addis', color='orange', linestyle='-', markeredgecolor='black', linewidth=3.5)
+    for i, rate in enumerate(req_rates):
+        for j, dataset in enumerate(datasets):
+            ax = axes[i, j]
+            ax.yaxis.set_major_locator(ticker.MultipleLocator(10))
 
-        ax.set_title(f"{dataset} (req rate={rate})", fontsize=26)
-        ax.set_xticks(x)
-        ax.set_xticklabels(metrics, fontsize=23, rotation=45, ha='right', rotation_mode='anchor')
-        if j == 0:
-            ax.set_ylabel("Latency (s)", fontsize=26)
-        if i == len(req_rates) - 1:
-            ax.set_xlabel("Tail Latency Metrics", fontsize=26)
-        ax.tick_params(axis='y', labelsize=26)
-        ax.grid(True, linestyle='--', alpha=0.6)
+            p_vals = parallax_data[model][dataset][rate]
+            c_vals = addis_data[model][dataset][rate]
 
-# Add a single legend for the entire figure in the layout, often near the title
-fig.legend([line1, line2], ["Parallax", "addis"], loc='upper center', ncol=2, fontsize=26)
+            line1, = ax.plot(x, p_vals, marker='o', label='Parallax', color='skyblue', linestyle='-', markeredgecolor='black', linewidth=3.5, markersize=10)
+            line2, = ax.plot(x, c_vals, marker='s', label='Addis', color='orange', linestyle='-', markeredgecolor='black', linewidth=3.5, markersize=10)
 
-# Use h_pad to increase vertical spacing and rect[0] to add room for the y-label
-plt.tight_layout(rect=[0.05, 0.01, 1, 0.92], h_pad=4.0)
-plt.savefig("end2end_latency.png", bbox_inches='tight')
+            ax.set_xticks(x)
+            ax.set_xticklabels([])
+
+            if i == 0:
+                ax.set_title(f"{dataset}", fontsize=28, pad=18)
+            if j == len(datasets) - 1:
+                ax.yaxis.set_label_position("right")
+                ax.set_ylabel(f"req-rate = {rate}", rotation=90, fontsize=30)
+            if j == 0:
+                ax.set_ylabel("Latency (s)", fontsize=28)
+            if i == len(req_rates) - 1:
+                ax.set_xticks(x)
+                ax.set_xticklabels(metrics, fontsize=28, rotation=45, ha='right')
+                ax.set_xlabel("Tail Latency Metrics", fontsize=28)
+
+            ax.tick_params(axis='y', labelsize=28)
+
+    fig.legend([line1, line2], ["Parallax", "ADDIS"], loc='upper center', bbox_to_anchor=(0.5, 0.94), ncol=2, fontsize=28)
+
+    plt.tight_layout(rect=[0.05, 0.02, 0.92, 0.92], h_pad=4.0, w_pad=2.0)
+
+    filename = f"end2end_latency_{model.lower()}.png"
+    plt.savefig(filename, bbox_inches='tight')
+    print(f"Saved {filename}")
